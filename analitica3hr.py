@@ -25,3 +25,179 @@ drive.mount('/content/drive')
 employee_survey = pd.read_csv('/content/drive/Shareddrives/Analitica 2 trabajo /Analítica III/1. Aplicaciones en RH/employee_survey_data.csv')
 employee_survey.head(2)
 
+"""### *Tamaño y forma*"""
+
+#Forma del DF
+employee_survey.shape                    #Tamaño
+employee_survey.columns                  #Nombre columnas
+employee_survey.dtypes                   #Tipo de variable
+print("El tamaño del DF es",employee_survey.shape )
+print("El nombre de las columnas del DF es",employee_survey.columns )
+print("El tipo de variable de cada columna es")
+print(employee_survey.dtypes )
+
+"""### Análisis de Nulos"""
+
+#No hay numero significante de datos faltantes en la base de datos Insumo 1
+print(employee_survey.isnull().sum())                   # Número de nulos por variable
+print("---------")
+print(employee_survey.isnull().sum() / employee_survey.shape[0])# % de nulos por variable
+
+employee_survey.dropna(axis=0, how='any', inplace=True)
+
+"""### Análisis de categorias de cada variable"""
+
+# No se evidencian problemas de digitación de las catgorias de las variables
+lista = [ 'EnvironmentSatisfaction', 'JobSatisfaction',
+       'WorkLifeBalance'] #Se crea una lista para poder aplicar funciones
+for i in lista:
+  print(employee_survey[i].value_counts())  #Contar los valores de cada categoria
+  print('--------------------------------')
+
+"""## **Informacion General Del Empleado**"""
+
+general_data = pd.read_csv('/content/drive/Shareddrives/Analitica 2 trabajo /Analítica III/1. Aplicaciones en RH/general_data.csv', sep=';')
+general_data.columns
+
+"""### *Tamaño y forma*"""
+
+#Forma del DF
+general_data.shape                    #Tamaño
+general_data.columns                  #Nombre columnas
+general_data.dtypes                   #Tipo de variable
+print("El tamaño del DF es",general_data.shape )
+print("El nombre de las columnas del DF es",general_data.columns )
+print("El tipo de variable de cada columna es")
+print(general_data.dtypes )
+
+"""### Análisis de Nulos"""
+
+#No hay numero significante de datos faltantes en la base de datos Insumo 1
+print(general_data.isnull().sum())                   # Número de nulos por variable
+print("---------")
+print(general_data.isnull().sum() / general_data.shape[0])# % de nulos por variable
+
+general_data.dropna(axis=0, how='any', inplace=True)
+
+"""### Análisis de categorias de cada variable"""
+
+# No se evidencian problemas de digitación de las catgorias de las variables
+lista = [ 'BusinessTravel', 'Department',  'Education',
+       'EducationField', 'EmployeeCount', 'Gender', 'JobLevel',
+       'JobRole', 'MaritalStatus', 'MonthlyIncome',
+       'Over18', 'PercentSalaryHike', 'StandardHours', 'StockOptionLevel'] #Se crea una lista para poder aplicar funciones
+for i in lista:
+  print(general_data[i].value_counts())  #Contar los valores de cada categoria
+  print('--------------------------------')
+
+"""## **Encuesta Gerentes**"""
+
+manager_survey_data = pd.read_csv('/content/drive/Shareddrives/Analitica 2 trabajo /Analítica III/1. Aplicaciones en RH/manager_survey_data.csv')
+manager_survey_data.head(3)
+
+"""### *Tamaño y forma*"""
+
+#Forma del DF
+manager_survey_data.shape                    #Tamaño
+manager_survey_data.columns                  #Nombre columnas
+manager_survey_data.dtypes                   #Tipo de variable
+print("El tamaño del DF es",manager_survey_data.shape )
+print("El nombre de las columnas del DF es",manager_survey_data.columns )
+print("El tipo de variable de cada columna es")
+print(manager_survey_data.dtypes )
+
+"""### Análisis de Nulos"""
+
+#No hay numero significante de datos faltantes en la base de datos Insumo 1
+print(manager_survey_data.isnull().sum())                   # Número de nulos por variable
+print("---------")
+print(manager_survey_data.isnull().sum() / manager_survey_data.shape[0])# % de nulos por variable
+
+"""### Análisis de categorias de cada variable"""
+
+# No se evidencian problemas de digitación de las catgorias de las variables
+lista = ['JobInvolvement', 'PerformanceRating'] #Se crea una lista para poder aplicar funciones
+for i in lista:
+  print(manager_survey_data[i].value_counts())  #Contar los valores de cada categoria
+  print('--------------------------------')
+
+"""## **Información De Retiro**"""
+
+retirement_info = pd.read_csv('/content/drive/Shareddrives/Analitica 2 trabajo /Analítica III/1. Aplicaciones en RH/retirement_info.csv', sep = ';')
+retirement_info.head(3)
+
+"""### *Tamaño y forma*
+
+"""
+
+#Forma del DF
+retirement_info.shape                    #Tamaño
+retirement_info.columns                  #Nombre columnas
+retirement_info.dtypes                   #Tipo de variable
+print("El tamaño del DF es",retirement_info.shape )
+print("El nombre de las columnas del DF es",retirement_info.columns )
+print("El tipo de variable de cada columna es")
+print(retirement_info.dtypes )
+
+"""### Análisis de Nulos"""
+
+#No hay numero significante de datos faltantes en la base de datos Insumo 1
+print(retirement_info.isnull().sum())                   # Número de nulos por variable
+print("---------")
+print(retirement_info.isnull().sum() / retirement_info.shape[0])# % de nulos por variable
+
+retirement_info['resignationReason'] = retirement_info['resignationReason'].fillna('Others')
+
+"""### Análisis de categorias de cada variable"""
+
+# No se evidencian problemas de digitación de las catgorias de las variables
+lista = [ 'Attrition', 'retirementType',
+       'resignationReason'] #Se crea una lista para poder aplicar funciones
+for i in lista:
+  print(retirement_info[i].value_counts())  #Contar los valores de cada categoria
+  print('--------------------------------')
+
+"""##**UNION BASE DE DATOS**"""
+
+dt1= employee_survey.merge(general_data, on='EmployeeID', how='left')
+dt2 = dt1.merge(manager_survey_data, on='EmployeeID', how='left')
+dt = dt2.merge(retirement_info, on='EmployeeID', how='left')
+dt.head(3)
+
+"""### *Tamaño y forma*"""
+
+#Forma del DF
+dt.shape                    #Tamaño
+dt.columns                  #Nombre columnas
+dt.dtypes                   #Tipo de variable
+print("El tamaño del DF es",dt.shape )
+print("El nombre de las columnas del DF es",dt.columns )
+print("El tipo de variable de cada columna es")
+print(dt.dtypes )
+
+"""### Análisis de Nulos"""
+
+#No hay numero significante de datos faltantes en la base de datos Insumo 1
+print(dt.isnull().sum())                   # Número de nulos por variable
+print("---------")
+print(dt.isnull().sum() / dt.shape[0])# % de nulos por variable
+
+#SE llenan los datos nulos que surgen de la union de la base de retiros con el resto, ya que las categorias de esta solo aplican para personal
+#despedido o que renuncia
+dt['Attrition'] = dt['Attrition'].fillna('No')
+dt['retirementDate'] = dt['retirementDate'].fillna('Na')
+dt['retirementType'] = dt['retirementType'].fillna('Na')
+dt['resignationReason'] = dt['resignationReason'].fillna('Na')
+#Se eliminan el resto de datos nulos ya que no representan una cantidad significativa de los datos
+general_data.dropna(axis=0, how='any', inplace=True)
+
+"""### Análisis de categorias de cada variable"""
+
+# No se evidencian problemas de digitación de las catgorias de las variables
+lista = [ 'BusinessTravel', 'Department',
+         'EducationField','Gender', 'JobRole', 'MaritalStatus', 
+        'Over18',  'JobInvolvement', 'PerformanceRating', 'Attrition', 
+       'retirementType', 'resignationReason'] #Se crea una lista para poder aplicar funciones
+for i in lista:
+  print(dt[i].value_counts())  #Contar los valores de cada categoria
+  print('--------------------------------')
