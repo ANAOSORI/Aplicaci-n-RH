@@ -201,3 +201,220 @@ lista = [ 'BusinessTravel', 'Department',
 for i in lista:
   print(dt[i].value_counts())  #Contar los valores de cada categoria
   print('--------------------------------')
+
+
+"""##**UNION BASE DE DATOS**"""
+
+dt1= employee_survey.merge(general_data, on='EmployeeID', how='left')
+dt2 = dt1.merge(manager_survey_data, on='EmployeeID', how='left')
+dt = dt2.merge(retirement_info, on='EmployeeID', how='left')
+dt.head(3)
+
+"""### *Tamaño y forma*"""
+
+#Forma del DF
+dt.shape                    #Tamaño
+dt.columns                  #Nombre columnas
+dt.dtypes                   #Tipo de variable
+print("El tamaño del DF es",dt.shape )
+print("El nombre de las columnas del DF es",dt.columns )
+print("El tipo de variable de cada columna es")
+print(dt.dtypes )
+
+"""### Análisis de Nulos"""
+
+#No hay numero significante de datos faltantes en la base de datos Insumo 1
+print(dt.isnull().sum())                   # Número de nulos por variable
+print("---------")
+print(dt.isnull().sum() / dt.shape[0])# % de nulos por variable
+
+#SE llenan los datos nulos que surgen de la union de la base de retiros con el resto, ya que las categorias de esta solo aplican para personal
+#despedido o que renuncia
+dt['Attrition'] = dt['Attrition'].fillna('No')
+dt['retirementDate'] = dt['retirementDate'].fillna('Na')
+dt['retirementType'] = dt['retirementType'].fillna('Na')
+dt['resignationReason'] = dt['resignationReason'].fillna('Na')
+#Se eliminan el resto de datos nulos ya que no representan una cantidad significativa de los datos
+dt.dropna(axis=0, how='any', inplace=True)
+
+"""### Análisis de categorias de cada variable"""
+
+# No se evidencian problemas de digitación de las catgorias de las variables
+lista = [ 'BusinessTravel', 'Department',
+         'EducationField','Gender', 'JobRole', 'MaritalStatus', 
+        'Over18',  'JobInvolvement', 'PerformanceRating', 'Attrition', 
+       'retirementType', 'resignationReason'] #Se crea una lista para poder aplicar funciones
+for i in lista:
+  print(dt[i].value_counts())  #Contar los valores de cada categoria
+  print('--------------------------------')
+
+"""#**Análisis Exploratorio**
+
+## GRAFICAS GENERALES
+
+### Análisis de correlaciones
+"""
+
+corr = dt.copy(deep = True)
+del corr['EmployeeID']
+del corr['EmployeeCount']
+del corr['StandardHours']
+
+#HEAT MAP
+figure(figsize= (22,15),dpi=80);
+sns.heatmap(corr.corr(),annot = True);
+plt.title("Mapa de calor correalaciones variables", fontsize =20);
+
+"""###Pairplot"""
+
+sns.pairplot(corr[['Age','PercentSalaryHike','TotalWorkingYears','YearsAtCompany','EnvironmentSatisfaction','PerformanceRating','Education']], height=2, aspect=1.3, plot_kws={"s": 3});
+
+"""### Histogramas y Boxplot"""
+
+figure(figsize=(20, 5), dpi=80);
+
+
+##GRAFICAR HISTOGRAMAS
+
+
+# graficar Age
+plt.subplot(1, 5, 1) 
+plt.tight_layout()
+plt.title('Age')
+plt.hist(corr['Age'],color= 'pink')
+
+
+# graficar Temperatura
+plt.subplot(1, 5, 2) 
+plt.tight_layout()
+plt.title('PercentSalaryHike')
+plt.hist(corr['PercentSalaryHike'],color= 'skyblue')
+
+# graficar Velocidad del aire
+plt.subplot(1, 5, 3) 
+plt.tight_layout()
+plt.title('TotalWorkingYears')
+plt.hist(corr['TotalWorkingYears'],color= 'pink')
+
+# graficar Humedad 
+plt.subplot(1, 5, 4) 
+plt.tight_layout()
+plt.title('EnvironmentSatisfaction')
+plt.hist(corr['EnvironmentSatisfaction'],color= 'skyblue')
+
+# graficar Precipitacion
+plt.subplot(1, 5, 5) 
+plt.tight_layout()
+plt.title('Education')
+plt.hist(corr['Education'],color= 'pink',);
+
+## GRAFICAR BOXPLOTS
+
+figure(figsize=(20, 4), dpi=80);
+
+# graficar JobSatisfaction
+plt.subplot(1, 4, 1) 
+plt.tight_layout()
+plt.title('JobSatisfaction')
+plt.boxplot(corr['JobSatisfaction'])
+
+# graficar WorkLifeBalance
+plt.subplot(1, 4, 2) 
+plt.tight_layout()
+plt.title('WorkLifeBalance')
+plt.boxplot(corr['WorkLifeBalance'])
+
+# graficar JobInvolvement
+plt.subplot(1, 4, 3) 
+plt.tight_layout()
+plt.title('JobInvolvement')
+plt.boxplot(corr['JobInvolvement'])
+
+# graficar EnvironmentSatisfaction 
+plt.subplot(1, 4, 4) 
+plt.tight_layout()
+plt.title('EnvironmentSatisfaction')
+plt.boxplot(corr['EnvironmentSatisfaction'],)
+;
+
+"""### Graficas Género
+
+**Para motivos de representar de mejor manera la distribucion de las edades y los ingresos por genero y por contuidad en la empresa, se decidio crear rangos en estas dos variables que expliquen de manera visual un poco mejor los comportamientos**
+"""
+
+print('La menor edad es de',dt['Age'].min())
+print('La mayor edad es de',dt['Age'].max())
+
+print('El menor ingreso es de',dt['MonthlyIncome'].min())
+print('El mayor ingreso es de',dt['MonthlyIncome'].max())
+
+rangos = dt.copy(deep = True)
+rangos['age_range'] = pd.cut(x=rangos['Age'], bins=[15, 20,25,30,35,40,45,50,55,60])
+rangos['MonthlyIncome'] = rangos['MonthlyIncome']/1000
+rangos['MonthlyIncome_range'] = pd.cut(x=rangos['MonthlyIncome'], bins=[10, 30,50,70,90,110,130,150,170,200])
+
+g1 = dt.groupby(['BusinessTravel','Gender'])[['EmployeeCount']].count().reset_index()
+fig = px.bar(g1, x="Gender", y="EmployeeCount", color="BusinessTravel", title="Genero y la frecuencia de viajes laborales", barmode = 'group')
+fig.show()
+
+g1 = rangos.groupby(['MonthlyIncome_range','Gender'])[['EmployeeCount']].count().reset_index()
+fig = px.bar(g1, x="Gender", y="EmployeeCount", color="MonthlyIncome_range", title="Genero y los rangos de ingresos", barmode = 'group')
+fig.show()
+
+g1 = rangos.groupby(['age_range','Gender'])[['EmployeeCount']].count().reset_index()
+fig = px.bar(g1, x="Gender", y="EmployeeCount", color="age_range", title="Genero y los rangos de edad", barmode = 'group')
+fig.show()
+
+g1 = dt.groupby(['Attrition','Gender'])[['EmployeeCount']].count().reset_index()
+fig = px.bar(g1, x="Gender", y="EmployeeCount", color="Attrition", title="Genero y la salida de la empresa", barmode = 'group')
+fig.show()
+
+# crear gráfica
+fig = px.pie(dt, values = 'MonthlyIncome', names ='Gender',
+             title= '<b> Ingresos totales por genero<b>',hole = .3,
+             color_discrete_sequence=px.colors.qualitative.G10)
+
+
+# poner detalles a la gráfica
+fig.update_layout(
+    template = 'simple_white',
+    title_x = 0.5,)
+fig.show()
+
+g1 = dt.groupby(['Department','Gender'])[['EmployeeCount']].count().reset_index()
+fig = px.bar(g1, x="Gender", y="EmployeeCount", color="Department", title="Genero y el departamento", barmode = 'group')
+fig.show()
+
+g1 = dt.groupby(['EducationField','Gender'])[['EmployeeCount']].count().reset_index()
+fig = px.bar(g1, x="Gender", y="EmployeeCount", color="EducationField", title="Genero y campo de educación", barmode = 'group')
+fig.show()
+
+"""### Graficas Retiros"""
+
+g1 = rangos.groupby(['MonthlyIncome_range','Attrition'])[['EmployeeCount']].count().reset_index()
+fig = px.bar(g1, x="Attrition", y="EmployeeCount", color="MonthlyIncome_range", title="Retiro y rangos de ingresos", barmode = 'group')
+fig.show()
+
+g1 = rangos.groupby(['age_range','Attrition'])[['EmployeeCount']].count().reset_index()
+fig = px.bar(g1, x="Attrition", y="EmployeeCount", color="age_range", title="Retiro y rangos de edades", barmode = 'group')
+fig.show()
+
+g1 = dt.groupby(['WorkLifeBalance','Attrition'])[['EmployeeCount']].count().reset_index()
+fig = px.bar(g1, x="Attrition", y="EmployeeCount", color="WorkLifeBalance", title="Retiro y balance trabajo-vida privada", barmode = 'group')
+fig.show()
+
+g1 = dt.groupby(['BusinessTravel','Attrition'])[['EmployeeCount']].count().reset_index()
+fig = px.bar(g1, x="Attrition", y="EmployeeCount", color="BusinessTravel", title="Retiro y Frecuencia de viajes laborales", barmode = 'group')
+fig.show()
+
+g1 = dt.groupby(['EnvironmentSatisfaction','Attrition'])[['EmployeeCount']].count().reset_index()
+fig = px.bar(g1, x="Attrition", y="EmployeeCount", color="EnvironmentSatisfaction", title="Retiro y Satisfaccion con el medio de trabajo", barmode = 'group')
+fig.show()
+
+g1 = dt.groupby(['MaritalStatus','Attrition'])[['EmployeeCount']].count().reset_index()
+fig = px.bar(g1, x="Attrition", y="EmployeeCount", color="MaritalStatus", title="Retiro y estado civil", barmode = 'group')
+fig.show()
+
+g1 = dt.groupby(['JobSatisfaction','Attrition'])[['EmployeeCount']].count().reset_index()
+fig = px.bar(g1, x="Attrition", y="EmployeeCount", color="JobSatisfaction", title="Retiro y Satisfaccion con el  trabajo", barmode = 'group')
+fig.show()
