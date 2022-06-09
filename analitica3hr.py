@@ -20,7 +20,10 @@ import seaborn as sns
 from google.colab import drive
 drive.mount('/content/drive')
 
-"""# **Encuesta Empelados**"""
+"""#**Limpieza y transformación**
+
+## **Encuesta Empelados**
+"""
 
 employee_survey = pd.read_csv('/content/drive/Shareddrives/Analitica 2 trabajo /Analítica III/1. Aplicaciones en RH/employee_survey_data.csv')
 employee_survey.head(2)
@@ -156,52 +159,6 @@ lista = [ 'Attrition', 'retirementType',
 for i in lista:
   print(retirement_info[i].value_counts())  #Contar los valores de cada categoria
   print('--------------------------------')
-
-"""##**UNION BASE DE DATOS**"""
-
-dt1= employee_survey.merge(general_data, on='EmployeeID', how='left')
-dt2 = dt1.merge(manager_survey_data, on='EmployeeID', how='left')
-dt = dt2.merge(retirement_info, on='EmployeeID', how='left')
-dt.head(3)
-
-"""### *Tamaño y forma*"""
-
-#Forma del DF
-dt.shape                    #Tamaño
-dt.columns                  #Nombre columnas
-dt.dtypes                   #Tipo de variable
-print("El tamaño del DF es",dt.shape )
-print("El nombre de las columnas del DF es",dt.columns )
-print("El tipo de variable de cada columna es")
-print(dt.dtypes )
-
-"""### Análisis de Nulos"""
-
-#No hay numero significante de datos faltantes en la base de datos Insumo 1
-print(dt.isnull().sum())                   # Número de nulos por variable
-print("---------")
-print(dt.isnull().sum() / dt.shape[0])# % de nulos por variable
-
-#SE llenan los datos nulos que surgen de la union de la base de retiros con el resto, ya que las categorias de esta solo aplican para personal
-#despedido o que renuncia
-dt['Attrition'] = dt['Attrition'].fillna('No')
-dt['retirementDate'] = dt['retirementDate'].fillna('Na')
-dt['retirementType'] = dt['retirementType'].fillna('Na')
-dt['resignationReason'] = dt['resignationReason'].fillna('Na')
-#Se eliminan el resto de datos nulos ya que no representan una cantidad significativa de los datos
-general_data.dropna(axis=0, how='any', inplace=True)
-
-"""### Análisis de categorias de cada variable"""
-
-# No se evidencian problemas de digitación de las catgorias de las variables
-lista = [ 'BusinessTravel', 'Department',
-         'EducationField','Gender', 'JobRole', 'MaritalStatus', 
-        'Over18',  'JobInvolvement', 'PerformanceRating', 'Attrition', 
-       'retirementType', 'resignationReason'] #Se crea una lista para poder aplicar funciones
-for i in lista:
-  print(dt[i].value_counts())  #Contar los valores de cada categoria
-  print('--------------------------------')
-
 
 """##**UNION BASE DE DATOS**"""
 
@@ -418,3 +375,217 @@ fig.show()
 g1 = dt.groupby(['JobSatisfaction','Attrition'])[['EmployeeCount']].count().reset_index()
 fig = px.bar(g1, x="Attrition", y="EmployeeCount", color="JobSatisfaction", title="Retiro y Satisfaccion con el  trabajo", barmode = 'group')
 fig.show()
+
+"""# **Selección de Variables**
+
+## *Escalado de Variables*
+
+*   Las variables Categoricas se deben de escalar por el metodo de binarixado
+*   Las variables Numericas se deberian de tratar con el metodo estandar ya que es el que mejor conserva los comportamientos de los datos frente a su media
+*   Las variables Constantes deben de ser tratadas como categoricas o en su defecto eliminarlas, ya que no cambian para ningun tipo de empleado
+*   La variable objetivo de este modelo será Attrition, la cual distingue entre si un empleado al año siguiente dejo la empresa o no
+"""
+
+# CATEGORICAS:  'WorkLifeBalance', 'JobSatisfaction', 'EnvironmentSatisfaction', 'JobLevel','Education','BusinessTravel', 'Department','EducationField','Gender','JobRole','MaritalStatus', 'Attrition', 'retirementDate',
+#'retirementType', 'resignationReason','StockOptionLevel','JobInvolvement', 'PerformanceRating'
+
+# NUMÉRICAS: 'Age','DistanceFromHome','EmployeeCount',  
+#                 'MonthlyIncome','NumCompaniesWorked', 'PercentSalaryHike', 'StandardHours', 'TotalWorkingYears', 
+#                    'TrainingTimesLastYear', 'YearsAtCompany', 'YearsSinceLastPromotion', 'YearsWithCurrManager'
+
+#CONSTANTES: 'EmployeeCount',  'StandardHours', 'Over18'
+
+# TARGET: Attrition
+
+from sklearn.preprocessing import LabelEncoder
+
+le = LabelEncoder()
+
+dt['JobLevel'] = le.fit_transform(dt.JobLevel)
+dt['Education'] = le.fit_transform(dt.Education)
+dt['BusinessTravel'] = le.fit_transform(dt.BusinessTravel)
+dt['Department'] = le.fit_transform(dt.Department)
+dt['EducationField'] = le.fit_transform(dt.EducationField)
+dt['Gender'] = le.fit_transform(dt.Gender)
+dt['JobRole'] = le.fit_transform(dt.JobRole)
+dt['MaritalStatus'] = le.fit_transform(dt.MaritalStatus)
+dt['Attrition'] = le.fit_transform(dt.Attrition)
+dt['retirementDate'] = le.fit_transform(dt.retirementDate)
+dt['retirementType'] = le.fit_transform(dt.retirementType)
+dt['resignationReason'] = le.fit_transform(dt.resignationReason)
+dt['StockOptionLevel'] = le.fit_transform(dt.StockOptionLevel)
+dt['JobInvolvement'] = le.fit_transform(dt.JobInvolvement)
+dt['PerformanceRating'] = le.fit_transform(dt.PerformanceRating)
+dt['EnvironmentSatisfaction'] = le.fit_transform(dt.EnvironmentSatisfaction)
+dt['JobSatisfaction'] = le.fit_transform(dt.JobSatisfaction)
+dt['WorkLifeBalance'] = le.fit_transform(dt.WorkLifeBalance)
+
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+
+Lista = ['Age','DistanceFromHome', 'MonthlyIncome','NumCompaniesWorked', 'PercentSalaryHike',  'TotalWorkingYears', 
+        'TrainingTimesLastYear', 'YearsAtCompany', 'YearsSinceLastPromotion', 'YearsWithCurrManager']
+
+for i in Lista:
+  dt[[i]] = scaler.fit_transform(dt[[i]])
+
+del dt['EmployeeCount']
+del dt['StandardHours']
+del dt['Over18']
+del dt['retirementDate']
+del dt['retirementType']
+del dt['resignationReason']
+
+Modelo = dt.copy(deep = True)
+Modelo.head(5)
+
+"""##Selección de Variables
+
+Una vez realizado el escalado de los datos, se procederá a la selección de las variables mas importantes. Se tendran en cuenta las mejores 6 variables que explien el modelo
+
+Se reorganixan las variables para facilitar la aplicacion de los metodos de feature selection, ubicando en la posicion 0 la columna objetvio Attrition
+"""
+
+Modelo = Modelo[['Attrition','EmployeeID', 'EnvironmentSatisfaction', 'JobSatisfaction',
+       'WorkLifeBalance', 'Age', 'BusinessTravel', 'Department',
+       'DistanceFromHome', 'Education', 'EducationField', 'Gender', 'JobLevel',
+       'JobRole', 'MaritalStatus', 'MonthlyIncome', 'NumCompaniesWorked',
+       'PercentSalaryHike', 'StockOptionLevel', 'TotalWorkingYears',
+       'TrainingTimesLastYear', 'YearsAtCompany', 'YearsSinceLastPromotion',
+       'YearsWithCurrManager', 'JobInvolvement', 'PerformanceRating']]
+
+arreglo = Modelo.values
+X = arreglo[:,1:26]
+Y = arreglo[:,0]
+
+"""Para la selección de Features se tendran en cuenta los metodos de *KBest* y *FeaturesImportance*, ya que para el uso de estos no es necesario definir de antemano el algorotmo por el cual se pretende clasificar el modelo."""
+
+from sklearn.feature_selection import SelectKBest
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.feature_selection import f_classif
+
+Modelo.dtypes
+#2-5-14-19-21-23
+# 2= 'EnvironmentSatisfaction'
+# 5= 'Age'
+# 14= 'MaritalStatus'
+# 19= 'TotalWorkingYears'
+# 21= 'YearsAtCompany'
+# 23= 'YearsWithCurrManager'
+
+#KBest
+
+prueba = SelectKBest(score_func=f_classif, k=6)
+fit = prueba.fit(X,Y)
+print('KBest: ',fit.scores_)
+
+#FeatureImportance
+
+modelo = ExtraTreesClassifier(n_estimators=100)
+modelo.fit(X,Y)
+
+print('------------------------------')
+
+
+print('Feature Importance: ',modelo.feature_importances_*100)
+
+"""Ambos metodos de selección de features concuerdan en que las variables que mejor explican el modelo de mayor puntaje a menor son:
+* EnvironmentSatisfaction
+* Age
+* MaritalStatus
+* TotalWorkingYears
+* YearsAtCompany
+* YearsWithCurrManager
+
+
+---
+Con las 6 variables obtenidas previamente, se planteara un modelo de ML que permita clasificar si el individuo continuará o no en la empresa al siguiente año.
+
+#**Selección de Algoritmos**
+
+---
+
+Como se menciono en la selección de features, el modelo se tratara de resolver por medio de 6 variables ya mencionadas
+
+---
+
+El metodo elegido para evaluar el desempeño del modelo sera el Kbest con 100 particiones, aprovechando el poco número de datos que la base posee, mejorando de esta manera la precisión del mismo.
+
+---
+
+La precisión del modelo se medirá por medio del Accuracy y el Reporte de Clasificación, con la intención de identificar las caracteristicas del modelo y sus fallos.
+
+---
+
+Se emplearan dos algoritmos de Ml, se implementara una Red Neuronal de Clasificación como algoritmo de aprendizaje no supervisado y un Support Vector Machinne Classificator como algoritmo de aprendizaje supervisado.
+
+---
+"""
+
+df = Modelo[['Attrition','EnvironmentSatisfaction','Age','MaritalStatus','TotalWorkingYears','YearsAtCompany',
+'YearsWithCurrManager']]
+df.head(2)
+
+arreglo = df.values
+X = arreglo[:,1:7]
+y = arreglo[:,0]
+
+"""##**Red Neuronal Clasificación**"""
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
+from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import classification_report
+
+
+
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
+regr = MLPClassifier(random_state=1, max_iter=500).fit(X_train, y_train)
+regr.predict(X_test[:5])
+
+## Accuracy
+
+
+print('Accuracy Prueba:  ',regr.score(X_test, y_test))
+print('Accuracy Entrenamiento:  ',regr.score(X_train, y_train))
+
+
+
+#Reporte de clasificación
+
+predicted = regr.predict(X_test)
+reporte = classification_report(y_test, predicted)
+print(reporte)
+
+"""## **SVMC**
+
+"""
+
+from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import KFold
+from sklearn.model_selection import cross_val_score
+
+kfold = KFold(n_splits=100, random_state=7, shuffle=True)
+modelKfold = SVC()
+score = 'accuracy'
+resultados_HD = cross_val_score(modelKfold, X, y, cv=kfold,scoring=score)
+print('Accuracy:',resultados_HD.mean())
+
+from sklearn.metrics import confusion_matrix
+test_size = 0.33
+seed = 7
+X_train, X_test, Y_train, Y_test = train_test_split(X, y, test_size=test_size,random_state=seed)
+model = SVC()
+model.fit(X_train, Y_train)
+predicted = model.predict(X_test)
+matrix = confusion_matrix(Y_test, predicted,labels=[1,0])
+print(matrix)
+
+cm = pd.DataFrame(
+    confusion_matrix(Y_test, predicted,labels=[1,0]), 
+    index=['Real:{:}'.format(x) for x in [0,1]], 
+    columns=['Pred:{:}'.format(x) for x in [0,1]]
+)
+cm
